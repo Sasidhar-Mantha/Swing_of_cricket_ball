@@ -1,0 +1,86 @@
+clc
+clear all
+Cs=0.3; % Average side force coefficient applied on a ball 
+fs =0.05; %Sampling frequency
+y=(0:1/fs:2016); %Length vector of a cricket pitch 
+x_dev = (0.00771*Cs.*y.*y)/1000; %Average deviation produced by a ball
+plot(y,x_dev) %plotting THE deviation 
+title('DEVIATION PRODUCED V/S LENGTH OF DELIVERY(18BEC1198) '); %giving a title to figure 
+xlabel('Delivery length of the ball','FontSize',8,'FontWeight',"bold");%labelling X axis
+ylabel('Deviation produced (cm)','FontSize',8,'FontWeight',"bold");%labelling Y axis
+figure(2)
+stem(y,x_dev); % Stem function is used to plot the Sampled signals
+title('DEVIATION PRODUCED V/S LENGTH OF DELIVERY(18BEC1198) '); %giving a title to figure
+xlabel('Delivery length of the ball','FontSize',8,'FontWeight',"bold");%labelling X axis
+ylabel('Deviation produced (cm)','FontSize',8,'FontWeight',"bold");%labelling Y axis
+
+%QUANTIZATION
+no_bits=4; %defining the number of bits per sample
+len=2^no_bits; %determining the length
+%defining x_max and x_min
+x_max=2016;
+x_min=0;
+delta=(x_max-x_min)/len; %defining delta
+
+%determining partition(decision lines) and the codebook(representation lines)
+partition=x_min:delta:x_max;
+codebook=-x_min-(delta/2):delta:x_max+del/2;
+%quantiz is an inbuilt function which gives the rounded value of the quantized signal
+[index,quants]=quantiz(y,partition,codebook);
+figure(3)
+stem(quants,"color",'r');%plotting of quantized signal
+title('QUANTIZED SIGNAL (18BEC1198)'); %giving a title to figure
+xlabel('Delivery length of the ball ','FontSize',8,'FontWeight',"bold");%labelling X axis
+ylabel('Deviation produced (m)','FontSize',8,'FontWeight',"bold");%labelling Y axis
+
+
+
+% NORMALIZATION
+
+len1=length(index); % to convert 1 to n as 0 to n-1 indicies
+for i=1:len1
+if (index(i)~=0)
+index(i)=index(i)-1;
+end
+end
+l2=length(quants);
+for i=1:l2 % Conversion of representation lines
+if(quants(i)==x_min-(del/2))
+quants(i)=x_min+(del/2);
+end
+if(quants(i)==x_max+(del/2))
+quants(i)=x_max-(del/2);
+end
+end
+
+% ENCODING
+encode=de2bi(quants,'left-msb'); % Converts Indices from Decimal to binary
+k=1;
+% Conversion of column vector to row vector
+for i=1:len1
+for j=1:no_bits
+encoded(k)=encode(i,j);
+j=j+1;
+k=k+1;
+end
+i=i+1;
+end
+figure(4);
+stairs(encoded); %plotting the digital signal obtained
+xlim([0,800])
+ylim([-2 2])
+title('DIGITAL SIGNAL (18BEC1198)'); %giving a title to figure
+xlabel('Delivery length of the ball ','FontSize',8,'FontWeight',"bold");%labelling X axis
+ylabel('Deviation produced (m)','FontSize',8,'FontWeight',"bold");%labelling Y axis
+
+%DEMODULATION
+demod1=reshape(encoded,no_bits,(length(coded)/no_bits));
+index_1=bi2de(demod1,'left-msb');
+demod_signal=del*index+x_min+(del/2);
+figure(5)
+%plotting the demodulated signal 
+plot(y,demod_signal,"color",'k');
+set(gca,'Fontsize',8,'Fontweight','bold')
+title('DEMODULATAED SIGNAL(18BEC1198)');
+xlabel('Delivery length of the ball','FontSize',8,'FontWeight',"bold");
+ylabel('Deviation produced (cm)','FontSize',8,'FontWeight',"bold");
